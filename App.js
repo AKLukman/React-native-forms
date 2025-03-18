@@ -1,45 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
   SafeAreaView,
   StatusBar,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
 export default function App() {
-  const [name, setName] = useState("");
-  const [isDark, setIsDark] = useState(false);
+  const [postList, setPostList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refresing, setRefreshing] = useState(true);
+  const fetchData = async (limit = 10) => {
+    const data = await fetch(
+      `https://jsonplaceholder.typicode.com/posts?_limit=${limit}`
+    );
+    const response = await data.json();
+    setPostList(response);
+    setIsLoading(false);
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData(20);
+    setRefreshing(false);
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff"></ActivityIndicator>
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Name"
-        // secureTextEntry
-        // keyboardType="numeric"
-        autoCorrect={false}
-        autoCapitalize="none"
-      ></TextInput>
-      <Text style={styles.text}>Name is {name}</Text>
-      {/* multu line text input */}
-      <TextInput
-        style={[styles.input, styles.multilineText]}
-        placeholder="message"
-        multiline
-      ></TextInput>
-      {/* switch */}
-      <View style={styles.switchContainer}>
-        <Text style={styles.text}>Dark mode</Text>
-        <Switch
-          value={isDark}
-          onValueChange={() => setIsDark(!isDark)}
-          trackColor={{ false: "#767577", true: "lightblue" }}
-          thumbColor="#f4f3f4"
-        ></Switch>
+      <View style={styles.listContainer}>
+        <FlatList
+          data={postList}
+          renderItem={({ item }) => {
+            return (
+              <View style={styles.post}>
+                <Text style={styles.postTitle}>{item.title}</Text>
+                <Text style={styles.postBody}>{item.body}</Text>
+              </View>
+            );
+          }}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }}></View>}
+          ListEmptyComponent={<Text>No post found!</Text>}
+          ListHeaderComponent={
+            <Text style={styles.headerText}>Post List {postList.length}</Text>
+          }
+          ListFooterComponent={
+            <Text style={styles.footerText}>End of post</Text>
+          }
+          refreshing={refresing}
+          onRefresh={handleRefresh}
+        ></FlatList>
       </View>
     </SafeAreaView>
   );
@@ -48,27 +70,41 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
     paddingTop: StatusBar.currentHeight,
   },
-  input: {
-    height: 40,
-    margin: 12,
-    padding: 10,
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  post: {
     borderWidth: 1,
-  },
-  text: {
-    fontSize: 20,
     padding: 10,
+    // marginVertical: 10,
+    borderRadius: 5,
   },
-  multilineText: {
-    minHeight: 100,
-    textAlignVertical: "top",
+  postTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
   },
-  switchContainer: {
-    flexDirection: "row",
+  headerText: {
+    textAlign: "center",
+    fontSize: 24,
+    fontWeight: "blod",
+    marginVertical: 10,
+  },
+  footerText: {
+    textAlign: "center",
+    marginVertical: 10,
+    fontSize: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+    paddingTop: StatusBar.currentHeight,
+    justifyContent: "center",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
   },
 });
